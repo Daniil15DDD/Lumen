@@ -1,0 +1,622 @@
+<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      x:Name="Root" Background="#0B0C10"
+      TextOptions.TextFormattingMode="Ideal" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True"
+      TextElement.FontFamily="Segoe UI Variable Text, Segoe UI" TextElement.Foreground="#F2F3F6">
+  <Grid.Resources>
+    <LinearGradientBrush x:Key="Accent" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#8B5CF6" Offset="0"/>
+      <GradientStop Color="#22D3EE" Offset="1"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Muted" Color="#8C92A1"/>
+    <SolidColorBrush x:Key="Line" Color="#12FFFFFF"/>
+    <!-- "light catching the material": bright top edge, fading down -->
+    <LinearGradientBrush x:Key="Edge" StartPoint="0,0" EndPoint="0,1">
+      <GradientStop Color="#26FFFFFF" Offset="0"/>
+      <GradientStop Color="#0AFFFFFF" Offset="0.35"/>
+      <GradientStop Color="#06FFFFFF" Offset="1"/>
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="CardFill" StartPoint="0,0" EndPoint="0,1">
+      <GradientStop Color="#10FFFFFF" Offset="0"/>
+      <GradientStop Color="#07FFFFFF" Offset="1"/>
+    </LinearGradientBrush>
+    <ExponentialEase x:Key="Out" EasingMode="EaseOut" Exponent="5"/>
+
+    <Style x:Key="Cap" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Foreground" Value="#8C92A1"/>
+      <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+    <Style x:Key="Val" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="#D5D8E0"/>
+      <Setter Property="HorizontalAlignment" Value="Right"/>
+    </Style>
+    <Style x:Key="CardTitle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI"/>
+      <Setter Property="Margin" Value="0,0,0,16"/>
+    </Style>
+    <Style x:Key="Card" TargetType="Border">
+      <Setter Property="CornerRadius" Value="18"/>
+      <Setter Property="Background" Value="{StaticResource CardFill}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Edge}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="20,18"/>
+    </Style>
+
+    <!-- ===== Slider: knob swells while you hold it ===== -->
+    <Style x:Key="FillRB" TargetType="RepeatButton">
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="RepeatButton">
+          <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}"/>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+    <Style x:Key="Knob" TargetType="Thumb">
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Thumb">
+          <Grid Width="22" Height="22" Background="Transparent">
+            <Ellipse x:Name="K" Width="18" Height="18" Fill="White" RenderTransformOrigin="0.5,0.5">
+              <Ellipse.RenderTransform><ScaleTransform/></Ellipse.RenderTransform>
+              <Ellipse.Effect><DropShadowEffect Color="#000000" BlurRadius="8" ShadowDepth="1" Opacity="0.45"/></Ellipse.Effect>
+            </Ellipse>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsDragging" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard>
+                <DoubleAnimation Storyboard.TargetName="K" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.18" Duration="0:0:0.16" EasingFunction="{StaticResource Out}"/>
+                <DoubleAnimation Storyboard.TargetName="K" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.18" Duration="0:0:0.16" EasingFunction="{StaticResource Out}"/>
+              </Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard>
+                <DoubleAnimation Storyboard.TargetName="K" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.3" EasingFunction="{StaticResource Out}"/>
+                <DoubleAnimation Storyboard.TargetName="K" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.3" EasingFunction="{StaticResource Out}"/>
+              </Storyboard></BeginStoryboard></Trigger.ExitActions>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+    <Style TargetType="Slider">
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="IsMoveToPointEnabled" Value="True"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+      <Setter Property="Background" Value="#23FFFFFF"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Slider">
+          <Grid Height="26" Background="Transparent">
+            <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}" VerticalAlignment="Center"/>
+            <Track x:Name="PART_Track" VerticalAlignment="Center">
+              <Track.DecreaseRepeatButton><RepeatButton Style="{StaticResource FillRB}" Background="{TemplateBinding Foreground}" Command="Slider.DecreaseLarge"/></Track.DecreaseRepeatButton>
+              <Track.IncreaseRepeatButton><RepeatButton Style="{StaticResource FillRB}" Background="Transparent" Command="Slider.IncreaseLarge"/></Track.IncreaseRepeatButton>
+              <Track.Thumb><Thumb Style="{StaticResource Knob}"/></Track.Thumb>
+            </Track>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+    <Style x:Key="ColorSlider" TargetType="Slider">
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="IsMoveToPointEnabled" Value="True"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Slider">
+          <Grid Height="28" Background="Transparent">
+            <Border Height="14" CornerRadius="7" Background="{TemplateBinding Background}" VerticalAlignment="Center" BorderBrush="#20FFFFFF" BorderThickness="1"/>
+            <Track x:Name="PART_Track" VerticalAlignment="Center">
+              <Track.DecreaseRepeatButton><RepeatButton Style="{StaticResource FillRB}" Background="Transparent" Command="Slider.DecreaseLarge"/></Track.DecreaseRepeatButton>
+              <Track.IncreaseRepeatButton><RepeatButton Style="{StaticResource FillRB}" Background="Transparent" Command="Slider.IncreaseLarge"/></Track.IncreaseRepeatButton>
+              <Track.Thumb>
+                <Thumb>
+                  <Thumb.Template>
+                    <ControlTemplate TargetType="Thumb">
+                      <Grid Width="26" Height="26" Background="Transparent">
+                        <Ellipse x:Name="R" Width="22" Height="22" Stroke="White" StrokeThickness="3" Fill="Transparent" RenderTransformOrigin="0.5,0.5">
+                          <Ellipse.RenderTransform><ScaleTransform/></Ellipse.RenderTransform>
+                          <Ellipse.Effect><DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.5"/></Ellipse.Effect>
+                        </Ellipse>
+                      </Grid>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="IsDragging" Value="True">
+                          <Trigger.EnterActions><BeginStoryboard><Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="R" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.15" Duration="0:0:0.16" EasingFunction="{StaticResource Out}"/>
+                            <DoubleAnimation Storyboard.TargetName="R" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.15" Duration="0:0:0.16" EasingFunction="{StaticResource Out}"/>
+                          </Storyboard></BeginStoryboard></Trigger.EnterActions>
+                          <Trigger.ExitActions><BeginStoryboard><Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="R" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1" Duration="0:0:0.3" EasingFunction="{StaticResource Out}"/>
+                            <DoubleAnimation Storyboard.TargetName="R" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1" Duration="0:0:0.3" EasingFunction="{StaticResource Out}"/>
+                          </Storyboard></BeginStoryboard></Trigger.ExitActions>
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Thumb.Template>
+                </Thumb>
+              </Track.Thumb>
+            </Track>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+
+    <!-- ===== Switch: knob glides, track cross-fades to accent ===== -->
+    <Style x:Key="Switch" TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="#E6E8EE"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Margin" Value="0,0,0,14"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="CheckBox">
+          <Grid Background="Transparent">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <ContentPresenter VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <Grid Grid.Column="1" Width="42" Height="24">
+              <Border CornerRadius="12" Background="#26FFFFFF"/>
+              <Border x:Name="On" CornerRadius="12" Background="{StaticResource Accent}" Opacity="0"/>
+              <Ellipse x:Name="KE" Width="18" Height="18" Fill="White" HorizontalAlignment="Left" Margin="3,0">
+                <Ellipse.RenderTransform><TranslateTransform/></Ellipse.RenderTransform>
+                <Ellipse.Effect><DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.35"/></Ellipse.Effect>
+              </Ellipse>
+            </Grid>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard>
+                <DoubleAnimation Storyboard.TargetName="KE" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="18" Duration="0:0:0.34" EasingFunction="{StaticResource Out}"/>
+                <DoubleAnimation Storyboard.TargetName="On" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
+              </Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard>
+                <DoubleAnimation Storyboard.TargetName="KE" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="0" Duration="0:0:0.34" EasingFunction="{StaticResource Out}"/>
+                <DoubleAnimation Storyboard.TargetName="On" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
+              </Storyboard></BeginStoryboard></Trigger.ExitActions>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+
+    <!-- ===== Sidebar nav (selection pill lives behind the list and springs between items) ===== -->
+    <Style x:Key="Nav" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="#8F95A3"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Height" Value="44"/>
+      <Setter Property="Margin" Value="12,0,12,4"/>
+      <Setter Property="GroupName" Value="nav"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Grid Background="Transparent">
+            <Border x:Name="H" CornerRadius="12" Background="#0CFFFFFF" Opacity="0"/>
+            <Grid Margin="16,0">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+              <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Center" Margin="0,0,14,0"/>
+              <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
+            </Grid>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.25"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
+              <Setter Property="Foreground" Value="#E6E8EE"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter Property="Foreground" Value="White"/>
+              <Setter Property="FontWeight" Value="SemiBold"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+
+    <!-- ===== Segment (text only; the pill is drawn by the Segmented control) ===== -->
+    <Style x:Key="Seg" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="#A3A9B6"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border Background="Transparent" Padding="2,7">
+            <ContentPresenter HorizontalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="#E6E8EE"/></Trigger>
+            <Trigger Property="IsChecked" Value="True"><Setter Property="Foreground" Value="White"/><Setter Property="FontWeight" Value="SemiBold"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+
+    <!-- ===== Effect card ===== -->
+    <Style x:Key="FxCard" TargetType="RadioButton">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="#D5D8E0"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Margin" Value="0,0,12,12"/>
+      <Setter Property="GroupName" Value="fx"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Grid Width="134" Height="96">
+            <Border CornerRadius="16" Background="{StaticResource CardFill}" BorderBrush="{StaticResource Edge}" BorderThickness="1"/>
+            <Border x:Name="H" CornerRadius="16" Background="#0CFFFFFF" Opacity="0"/>
+            <Border x:Name="Sel" CornerRadius="16" BorderBrush="{StaticResource Accent}" BorderThickness="2" Opacity="0"/>
+            <Grid Margin="12">
+              <Border x:Name="Prev" Height="36" CornerRadius="10" VerticalAlignment="Top" Background="{TemplateBinding Background}">
+                <Border.Effect><DropShadowEffect Color="#8B5CF6" BlurRadius="16" ShadowDepth="0" Opacity="0"/></Border.Effect>
+              </Border>
+              <ContentPresenter VerticalAlignment="Bottom"/>
+            </Grid>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.25"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard>
+                <DoubleAnimation Storyboard.TargetName="Sel" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.18"/>
+                <DoubleAnimation Storyboard.TargetName="Prev" Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" To="0.6" Duration="0:0:0.3"/>
+              </Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard>
+                <DoubleAnimation Storyboard.TargetName="Sel" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.25"/>
+                <DoubleAnimation Storyboard.TargetName="Prev" Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)" To="0" Duration="0:0:0.25"/>
+              </Storyboard></BeginStoryboard></Trigger.ExitActions>
+              <Setter Property="Foreground" Value="White"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+
+    <!-- ===== Buttons ===== -->
+    <Style x:Key="Primary" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Grid>
+            <Border CornerRadius="12" Background="{StaticResource Accent}">
+              <Border.Effect><DropShadowEffect Color="#8B5CF6" BlurRadius="22" ShadowDepth="0" Opacity="0.5"/></Border.Effect>
+            </Border>
+            <Border CornerRadius="12" BorderBrush="#40FFFFFF" BorderThickness="0,1,0,0"/>
+            <Border x:Name="H" CornerRadius="12" Background="#1AFFFFFF" Opacity="0"/>
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="22,11"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.25"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+    <Style x:Key="Ghost" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="#E2E5EC"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Padding" Value="14,8"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Grid>
+            <Border CornerRadius="10" Background="#14FFFFFF" BorderBrush="{StaticResource Edge}" BorderThickness="1"/>
+            <Border x:Name="H" CornerRadius="10" Background="#14FFFFFF" Opacity="0"/>
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.25"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+    <Style x:Key="WinBtn" TargetType="Button">
+      <Setter Property="Foreground" Value="#B9BECA"/>
+      <Setter Property="Width" Value="46"/>
+      <Setter Property="Height" Value="36"/>
+      <Setter Property="Tag" Value="nopress"/>
+      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Grid Background="Transparent">
+            <Border x:Name="H" Background="#16FFFFFF" Opacity="0"/>
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.1"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+    <Style x:Key="CloseBtn" TargetType="Button" BasedOn="{StaticResource WinBtn}">
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Grid Background="Transparent">
+            <Border x:Name="H" Background="#E81123" Opacity="0"/>
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.1"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="H" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
+              <Setter Property="Foreground" Value="White"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+    <Style x:Key="Power" TargetType="ToggleButton">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Width" Value="46"/>
+      <Setter Property="Height" Value="46"/>
+      <Setter Property="Foreground" Value="#AEB3C0"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="ToggleButton">
+          <Grid>
+            <Ellipse Fill="#16FFFFFF" Stroke="{StaticResource Edge}" StrokeThickness="1"/>
+            <Ellipse x:Name="On" Fill="{StaticResource Accent}" Opacity="0">
+              <Ellipse.Effect><DropShadowEffect Color="#8B5CF6" BlurRadius="24" ShadowDepth="0" Opacity="0.75"/></Ellipse.Effect>
+            </Ellipse>
+            <TextBlock Text="&#xE7E8;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="On" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.25"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="On" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.3"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
+              <Setter Property="Foreground" Value="White"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+    <Style x:Key="Swatch" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="Template"><Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Grid Width="36" Height="36" Background="Transparent">
+            <Ellipse x:Name="R" Stroke="#D0FFFFFF" StrokeThickness="2" Opacity="0"/>
+            <Ellipse Margin="5" Fill="{TemplateBinding Background}" Stroke="#20FFFFFF" StrokeThickness="1"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="R" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions>
+              <Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="R" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.25"/></Storyboard></BeginStoryboard></Trigger.ExitActions>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value></Setter>
+    </Style>
+  </Grid.Resources>
+
+  <Grid.ColumnDefinitions>
+    <ColumnDefinition Width="236"/>
+    <ColumnDefinition Width="*"/>
+  </Grid.ColumnDefinitions>
+
+  <!-- ambient wash: the preview's glow bleeding into the whole window -->
+  <Ellipse x:Name="Ambient" Grid.ColumnSpan="2" Width="900" Height="520" Margin="200,-260,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Opacity="0.16" IsHitTestVisible="False">
+    <Ellipse.Fill>
+      <RadialGradientBrush>
+        <GradientStop x:Name="AmbientStop" Color="#8B5CF6" Offset="0"/>
+        <GradientStop Color="#008B5CF6" Offset="1"/>
+      </RadialGradientBrush>
+    </Ellipse.Fill>
+  </Ellipse>
+
+  <!-- ================= Sidebar (heavier material) ================= -->
+  <Border Grid.Column="0" Background="#B3060609" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+    <DockPanel>
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="22,30,20,28">
+        <Image x:Name="Logo" Width="42" Height="42" RenderOptions.BitmapScalingMode="HighQuality"/>
+        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+          <TextBlock Text="Lumen" FontSize="20" FontWeight="Bold" FontFamily="Segoe UI Variable Display, Segoe UI"/>
+          <TextBlock Text="Light Strip Studio" FontSize="11" Foreground="{StaticResource Muted}"/>
+        </StackPanel>
+      </StackPanel>
+
+      <Border DockPanel.Dock="Bottom" Margin="14,0,14,16" CornerRadius="16" Background="{StaticResource CardFill}" BorderBrush="{StaticResource Edge}" BorderThickness="1" Padding="14,12">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <Grid Width="10" Height="10" VerticalAlignment="Center">
+              <Ellipse x:Name="StatusHalo" Width="10" Height="10" Fill="#F59E0B" Opacity="0.35"/>
+              <Ellipse x:Name="StatusDot" Width="6" Height="6" Fill="#F59E0B"/>
+            </Grid>
+            <TextBlock x:Name="StatusText" Text="Searching…" FontSize="13" FontWeight="SemiBold" Margin="8,0,0,0"/>
+          </StackPanel>
+          <TextBlock x:Name="DeviceText" Text="Robobloq light strip" FontSize="11" Foreground="{StaticResource Muted}" Margin="18,3,0,0" TextWrapping="Wrap"/>
+          <Border Height="1" Background="{StaticResource Line}" Margin="0,11"/>
+          <TextBlock x:Name="StatsText" Text="CPU —   RAM —" FontSize="11" Foreground="{StaticResource Muted}"/>
+        </StackPanel>
+      </Border>
+
+      <Grid x:Name="NavHost" VerticalAlignment="Top">
+        <Border x:Name="NavPill" Height="44" Margin="12,0" VerticalAlignment="Top" CornerRadius="12" Background="#1AFFFFFF" BorderBrush="{StaticResource Edge}" BorderThickness="1" IsHitTestVisible="False">
+          <Border Width="3" Height="18" CornerRadius="1.5" HorizontalAlignment="Left" Margin="-1,0,0,0" Background="{StaticResource Accent}">
+            <Border.Effect><DropShadowEffect Color="#8B5CF6" BlurRadius="10" ShadowDepth="0" Opacity="0.9"/></Border.Effect>
+          </Border>
+        </Border>
+        <StackPanel x:Name="NavList">
+          <RadioButton x:Name="NavSync" Style="{StaticResource Nav}" Tag="&#xE7F4;" Content="Screen Sync" IsChecked="True"/>
+          <RadioButton x:Name="NavColor" Style="{StaticResource Nav}" Tag="&#xE790;" Content="Color"/>
+          <RadioButton x:Name="NavFx" Style="{StaticResource Nav}" Tag="&#xE945;" Content="Effects"/>
+          <RadioButton x:Name="NavSet" Style="{StaticResource Nav}" Tag="&#xE713;" Content="Settings"/>
+        </StackPanel>
+      </Grid>
+    </DockPanel>
+  </Border>
+
+  <!-- ================= Main ================= -->
+  <Grid Grid.Column="1">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="38"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+      <Button x:Name="BtnMin" Style="{StaticResource WinBtn}" Content="&#xE921;"/>
+      <Button x:Name="BtnClose" Style="{StaticResource CloseBtn}" Content="&#xE8BB;"/>
+    </StackPanel>
+
+    <Grid Grid.Row="1" Margin="34,0,34,0">
+      <StackPanel x:Name="Header" VerticalAlignment="Center">
+        <TextBlock x:Name="PageTitle" Text="Screen Sync" FontSize="30" FontWeight="Bold" FontFamily="Segoe UI Variable Display, Segoe UI"/>
+        <TextBlock x:Name="PageSub" Text="Your strip mirrors the edges of your display." FontSize="13" Foreground="{StaticResource Muted}" Margin="0,3,0,0"/>
+      </StackPanel>
+      <Border HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="28" Background="{StaticResource CardFill}" BorderBrush="{StaticResource Edge}" BorderThickness="1" Padding="16,5,5,5">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="&#xE706;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="15" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+          <Slider x:Name="BriSl" Width="150" Minimum="1" Maximum="100" Value="100" Margin="10,0,8,0" VerticalAlignment="Center"/>
+          <TextBlock x:Name="BriText" Text="100%" Width="36" FontSize="12" FontWeight="SemiBold" Foreground="#D5D8E0" VerticalAlignment="Center"/>
+          <ToggleButton x:Name="PowerBtn" Style="{StaticResource Power}" Margin="6,0,0,0" IsChecked="True" ToolTip="Lights on / off"/>
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <Border Grid.Row="2" Margin="34,22,34,0" Height="236" CornerRadius="22" BorderBrush="{StaticResource Edge}" BorderThickness="1" ClipToBounds="True">
+      <Border.Background>
+        <RadialGradientBrush Center="0.5,0.45" GradientOrigin="0.5,0.45" RadiusX="0.7" RadiusY="0.9">
+          <GradientStop Color="#15161D" Offset="0"/>
+          <GradientStop Color="#0D0E13" Offset="1"/>
+        </RadialGradientBrush>
+      </Border.Background>
+      <Grid>
+        <Viewbox Stretch="Uniform" Margin="0,6">
+          <Canvas x:Name="Stage" Width="640" Height="232"/>
+        </Viewbox>
+        <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="16" CornerRadius="12" Background="#66000000" BorderBrush="{StaticResource Edge}" BorderThickness="1" Padding="11,6">
+          <StackPanel Orientation="Horizontal">
+            <Ellipse x:Name="ModeDot" Width="7" Height="7" Fill="#22D3EE" VerticalAlignment="Center"/>
+            <TextBlock x:Name="ModeText" Text="Screen Sync" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0" Foreground="#E6E8EE"/>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+
+    <Grid x:Name="Pages" Grid.Row="3" Margin="34,18,34,24">
+
+      <!-- Screen sync -->
+      <Grid x:Name="PageSync">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,7,0">
+          <StackPanel>
+            <TextBlock Text="Motion" Style="{StaticResource CardTitle}"/>
+            <Grid><TextBlock Text="Smoothness" Style="{StaticResource Cap}"/><TextBlock x:Name="SmoothVal" Style="{StaticResource Val}"/></Grid>
+            <Slider x:Name="SmoothSl" Minimum="0" Maximum="100" Margin="0,0,0,14"/>
+            <TextBlock Text="Update rate" Style="{StaticResource Cap}"/>
+            <ContentControl x:Name="FpsHost"/>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="1" Style="{StaticResource Card}" Margin="7,0,7,0">
+          <StackPanel>
+            <TextBlock Text="Color" Style="{StaticResource CardTitle}"/>
+            <Grid><TextBlock Text="Vibrance" Style="{StaticResource Cap}"/><TextBlock x:Name="VibVal" Style="{StaticResource Val}"/></Grid>
+            <Slider x:Name="VibSl" Minimum="50" Maximum="200" Margin="0,0,0,14"/>
+            <Grid><TextBlock Text="Edge depth" Style="{StaticResource Cap}"/><TextBlock x:Name="DepthVal" Style="{StaticResource Val}"/></Grid>
+            <Slider x:Name="DepthSl" Minimum="3" Maximum="35"/>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="2" Style="{StaticResource Card}" Margin="7,0,0,0">
+          <StackPanel>
+            <TextBlock Text="Source" Style="{StaticResource CardTitle}"/>
+            <TextBlock Text="Display" Style="{StaticResource Cap}"/>
+            <ContentControl x:Name="MonHost" Margin="0,0,0,14"/>
+            <TextBlock Text="Detail" Style="{StaticResource Cap}"/>
+            <ContentControl x:Name="DetHost"/>
+          </StackPanel>
+        </Border>
+        <Button x:Name="SyncBtn" Grid.Row="1" Grid.ColumnSpan="3" Style="{StaticResource Primary}" Content="Start Screen Sync" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="0,14,0,0"/>
+      </Grid>
+
+      <!-- Color -->
+      <Grid x:Name="PageColor" Visibility="Collapsed">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="210"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+        <Border Style="{StaticResource Card}" Margin="0,0,14,0">
+          <Grid>
+            <Ellipse x:Name="ColorGlow" Width="160" Height="160" Opacity="0.6" VerticalAlignment="Center" Margin="0,-14,0,0">
+              <Ellipse.Effect><BlurEffect Radius="46"/></Ellipse.Effect>
+            </Ellipse>
+            <Ellipse x:Name="ColorDot" Width="108" Height="108" VerticalAlignment="Center" Margin="0,-14,0,0" Stroke="#40FFFFFF" StrokeThickness="1"/>
+            <TextBlock x:Name="HexText" Text="#FFFFFF" VerticalAlignment="Bottom" HorizontalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="#B9BECA" FontFamily="Cascadia Mono, Consolas"/>
+          </Grid>
+        </Border>
+        <Border Grid.Column="1" Style="{StaticResource Card}">
+          <StackPanel>
+            <TextBlock Text="Hue" Style="{StaticResource Cap}"/>
+            <Slider x:Name="HueSl" Style="{StaticResource ColorSlider}" Minimum="0" Maximum="360" Margin="0,0,0,12">
+              <Slider.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                  <GradientStop Color="#FF0000" Offset="0"/>
+                  <GradientStop Color="#FFFF00" Offset="0.1667"/>
+                  <GradientStop Color="#00FF00" Offset="0.3333"/>
+                  <GradientStop Color="#00FFFF" Offset="0.5"/>
+                  <GradientStop Color="#0000FF" Offset="0.6667"/>
+                  <GradientStop Color="#FF00FF" Offset="0.8333"/>
+                  <GradientStop Color="#FF0000" Offset="1"/>
+                </LinearGradientBrush>
+              </Slider.Background>
+            </Slider>
+            <TextBlock Text="Saturation" Style="{StaticResource Cap}"/>
+            <Slider x:Name="SatSl" Style="{StaticResource ColorSlider}" Minimum="0" Maximum="100" Margin="0,0,0,14"/>
+            <TextBlock Text="Presets" Style="{StaticResource Cap}"/>
+            <WrapPanel x:Name="Swatches"/>
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <!-- Effects -->
+      <Grid x:Name="PageFx" Visibility="Collapsed">
+        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <WrapPanel x:Name="FxPanel"/>
+        <Border Grid.Row="1" Style="{StaticResource Card}" Padding="20,12">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="50"/></Grid.ColumnDefinitions>
+            <TextBlock Text="Speed" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,18,0"/>
+            <Slider x:Name="SpeedSl" Grid.Column="1" Minimum="0" Maximum="100" VerticalAlignment="Center"/>
+            <TextBlock x:Name="SpeedVal" Grid.Column="2" Style="{StaticResource Val}" VerticalAlignment="Center"/>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- Settings -->
+      <Grid x:Name="PageSet" Visibility="Collapsed">
+        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <Border Style="{StaticResource Card}" Margin="0,0,7,0">
+          <StackPanel>
+            <TextBlock Text="LED layout" Style="{StaticResource CardTitle}"/>
+            <StackPanel x:Name="LayoutPanel"/>
+            <CheckBox x:Name="MirrorSw" Style="{StaticResource Switch}" Content="Strip starts on the left side" Margin="0,4,0,10"/>
+            <StackPanel Orientation="Horizontal">
+              <Button x:Name="IdentifyBtn" Style="{StaticResource Ghost}" Content="Identify sides"/>
+              <Button x:Name="ResetLayoutBtn" Style="{StaticResource Ghost}" Content="Reset" Margin="8,0,0,0"/>
+            </StackPanel>
+            <TextBlock x:Name="LayoutHint" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="1" Style="{StaticResource Card}" Margin="7,0,0,0">
+          <StackPanel>
+            <TextBlock Text="App" Style="{StaticResource CardTitle}"/>
+            <CheckBox x:Name="StartupSw" Style="{StaticResource Switch}" Content="Start with Windows"/>
+            <CheckBox x:Name="TraySw" Style="{StaticResource Switch}" Content="Start minimized to tray"/>
+            <CheckBox x:Name="CloseTraySw" Style="{StaticResource Switch}" Content="Close button keeps running in tray"/>
+            <Border Height="1" Background="{StaticResource Line}" Margin="0,2,0,12"/>
+            <TextBlock x:Name="AboutText" FontSize="11" Foreground="{StaticResource Muted}" TextWrapping="Wrap" LineHeight="17"/>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Grid>
+  </Grid>
+</Grid>
